@@ -14,7 +14,7 @@ variable "testvariable"{
   type=string
   default="Hello MCIT!"
 }
-variable "testvariable"{
+variable "testnumber"{
   type=number
   default="1"
 }

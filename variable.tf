@@ -14,3 +14,7 @@ variable "testvariable"{
   type=string
   default="Hello MCIT!"
 }
+variable "testvariable"{
+  type=number
+  default="1"
+}

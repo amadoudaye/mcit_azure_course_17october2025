@@ -16,5 +16,5 @@ variable "testvariable"{
 }
 variable "testnumber"{
   type=number
-  default="1"
+  default=1
 }

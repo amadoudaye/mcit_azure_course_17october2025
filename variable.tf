@@ -18,3 +18,7 @@ variable "testnumber"{
   type=number
   default=1
 }
+variable "testliststring"{
+  type=list(string)
+  default=["montreal","toronto","calgary"]
+}

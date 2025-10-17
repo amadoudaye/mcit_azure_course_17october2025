@@ -10,3 +10,7 @@ variable "client_secret"{
 variable "tenant_id"{
   type=string
 }
+variable "testvariable"{
+  type=string
+  default="Hello MCIT!"
+}

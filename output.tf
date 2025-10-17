@@ -4,3 +4,6 @@ output "name_output"{
 output "name_number"{
   value=var.testnumber
 }
+output "name_string"{
+  value=var.testliststring
+}

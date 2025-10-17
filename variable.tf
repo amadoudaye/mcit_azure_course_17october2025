@@ -22,3 +22,11 @@ variable "testliststring"{
   type=list(string)
   default=["montreal","toronto","calgary"]
 }
+variable "storage_account_name"{
+  type=string
+  default="mcitoctostorage"
+}
+variable "account_tier"{
+  type=string
+  default="Standard"
+}

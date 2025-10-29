@@ -10,3 +10,31 @@ variable "client_secret"{
 variable "tenant_id"{
   type=string
 }
+variable "testvariable"{
+  type=string
+  default="Hello MCIT!"
+}
+variable "testnumber"{
+  type=number
+  default=1
+}
+variable "testliststring"{
+  type=list(string)
+  default=["montreal","toronto","calgary"]
+}
+variable "storage_account_name"{
+  type=string
+  default="mcitoctostorage"
+}
+variable "account_tier"{
+  type=string
+  default="Standard"
+}
+variable "account_replication_type"{
+  type=string
+  default="GRS"
+}
+variable "environment"{
+  type=string
+  default="production"
+}

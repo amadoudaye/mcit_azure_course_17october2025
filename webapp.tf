@@ -116,10 +116,10 @@ resource "azurerm_resource_group" "rg" {
     #each.value.app_settings
   #)
 
-  identity {
-    type = "SystemAssigned"
-  }
-}
+ # identity {
+  #  type = "SystemAssigned"
+  #}
+#}
 
 output "webapp_hostnames" {
   value = {

@@ -62,6 +62,17 @@ resource "azurerm_linux_web_app" "app" {
   service_plan_id     = azurerm_service_plan.asp_env["${each.value.location}-${each.value.env}"].id
   https_only          = true
   tags                = merge(var.tags, { env = each.value.env })
+app_settings = merge(
+    {
+      "WEBSITE_RUN_FROM_PACKAGE" = "0"
+      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
+    },
+    each.value.app_settings
+  )
+
+  identity {
+    type = "SystemAssigned"
+  }
 
   site_config {
     ftps_state = "Disabled"
@@ -75,17 +86,7 @@ resource "azurerm_linux_web_app" "app" {
     }
   }
 
-  app_settings = merge(
-    {
-      "WEBSITE_RUN_FROM_PACKAGE" = "0"
-      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
-    },
-    each.value.app_settings
-  )
-
-  identity {
-    type = "SystemAssigned"
-  }
+  
 }
 
  # Demonstrating lookup() for an optional app setting with a default:

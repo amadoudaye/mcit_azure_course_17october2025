@@ -1,12 +1,17 @@
-# Resource Group (create if absent)
+##############################################
+# RESOURCE GROUP
+##############################################
 resource "azurerm_resource_group" "rg_new" {
   name     = var.second_resource_group_name
   location = var.resource_group_location
   tags     = var.tags
 }
 
-# Distinct set of locations needed for Service Plans (one per location)
+##############################################
+# LOCALS – DEFINE ALL IN ONE BLOCK
+##############################################
 locals {
+  # Distinct plans per location and environment
   plans = {
     for k, v in var.webapps :
     "${v.location}-${v.env}" => {
@@ -17,11 +22,13 @@ locals {
   }
 }
 
-# ✅ ONE App Service Plan per environment/location
+##############################################
+# APP SERVICE PLAN (ONE PER LOCATION + ENV)
+##############################################
 resource "azurerm_service_plan" "asp_env" {
   for_each = local.plans
 
-  name                = "asp-${replace(each.key, " ", "-")}"
+  name                = "asp-${replace(each.key, " ", "-")}" # replace spaces with dashes
   resource_group_name = azurerm_resource_group.rg_new.name
   location            = each.value.location
   os_type             = "Linux"
@@ -29,7 +36,9 @@ resource "azurerm_service_plan" "asp_env" {
   tags                = var.tags
 }
 
-# ✅ ONE Linux Web App per entry
+##############################################
+# LINUX WEB APPS (ONE PER APP)
+##############################################
 resource "azurerm_linux_web_app" "app" {
   for_each = var.webapps
 
@@ -65,7 +74,9 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
-# ✅ Output: fixed default_hostname attribute
+##############################################
+# OUTPUTS
+##############################################
 output "webapp_hostnames" {
   value = {
     for k, v in azurerm_linux_web_app.app : k => v.default_hostname

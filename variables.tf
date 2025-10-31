@@ -38,3 +38,14 @@ variable "environment"{
   type=string
   default="production"
 }
+variable "admin_username" {
+  description = "Admin username for the Linux VM"
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_password" {
+  description = "Admin password for the Linux VM"
+  type        = string
+  sensitive   = true
+}

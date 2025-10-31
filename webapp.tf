@@ -98,13 +98,13 @@ resource "azurerm_linux_web_app" "app" {
   site_config {
     ftps_state = "Disabled"
 
-    dynamic "application_stack" {
-      for_each = [each.value.runtime]
-      content {
+    #dynamic "application_stack" {
+     # for_each = [each.value.runtime]
+      #content {
        # python_version = contains(each.value.runtime, "PYTHON") ? split("|", each.value.runtime)[1] : null
         #node_version   = contains(each.value.runtime, "NODE") ? split("|", each.value.runtime)[1] : null
-      }
-    }
+    #  }
+    #}
   }
 
   # ✅ app_settings block works under AzureRM v4

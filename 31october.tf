@@ -1,82 +1,69 @@
-# Resource Group (create if absent)
-resource "azurerm_resource_group" "rg_new" {
-  name     = var.second_resource_group_name
-  location = var.resource_group_location
-  tags     = var.tags
-}
- 
-# Distinct set of locations needed for Service Plans (one per location)
-locals {
-  locations = toset([for w in var.webapps : w.location])
-}
- 
-# App Service Plan per location (Linux)
-resource "azurerm_service_plan" "asp" {
-  for_each = local.locations
- 
-  name                = "asp-${each.value}"
+# works with code of 29 october.tf
+resource "azurerm_virtual_network" "vnet" {
+  name                = "my-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.rg_new.location
   resource_group_name = azurerm_resource_group.rg_new.name
-  location            = each.value
-  os_type             = "Linux"
-  sku_name            = "B1" # temporary; overridden below via lifecycle block or use a shared default
-  tags                = var.tags
 }
- 
-# Because each app might want a different SKU by env,
-# we set plan SKUs using per-app lookup by env.
-# A simple approach: one plan per LOCATION **and** ENV (so SKU can differ).
-locals {
-  plans = {
-    for k, v in var.webapps :
-    "${v.location}-${v.env}" => {
-      location = v.location
-      env      = v.env
-      sku      = lookup(var.sku_by_env, v.env, "P1v3") # <--- lookup() with default
-    }
+resource "azurerm_subnet" "subnet" {
+  name                 = "my-subnet"
+  resource_group_name  = azurerm_resource_group.rg_new.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+resource "azurerm_network_interface" "ama" {
+  name                = "my-ama"
+  location            = azurerm_resource_group.rg_new.location
+  resource_group_name = azurerm_resource_group.rg_new.name
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.pip.id
   }
 }
- 
-# Recreate service plans keyed by location-env (overrides earlier single-per-location approach)
-# If you prefer ONE plan per location, comment this block and use the first asp.
-resource "azurerm_service_plan" "asp_env" {
-  for_each = local.plans
- 
-  name                = "asp-${replace(each.key, " ", "")}"
+resource "azurerm_public_ip" "pip" {
+  name                = "my-public-ip"
+  location            = azurerm_resource_group.rg_new.location
   resource_group_name = azurerm_resource_group.rg_new.name
-  location            = each.value.location
-  os_type             = "Linux"
-  sku_name            = each.value.sku # <--- comes from lookup(var.sku_by_env,...)
-  tags                = var.tags
+  allocation_method   = "Dynamic"
 }
- 
-# Linux Web Apps – for_each over the webapps map
-resource "azurerm_linux_web_app" "app" {
-  for_each = var.webapps
- 
-  name                = each.value.name
+resource "azurerm_network_security_group" "nsg" {
+  name                = "my-nsg"
+  location            = azurerm_resource_group.rg_new.location
   resource_group_name = azurerm_resource_group.rg_new.name
-  location            = each.value.location
- 
- 
-  # Bind to the plan matched by location-env
-  service_plan_id = azurerm_service_plan.asp_env["${each.value.location}-${each.value.env}"].id
- 
-  https_only = true
-  tags       = merge(var.tags, { env = each.value.env })
-     site_config {}
- 
- 
-  # Demonstrating lookup() for an optional app setting with a default:
-  # If FEATURE_FLAG not provided per app, default to "off".
-  app_settings = merge(
-    {
-      "WEBSITE_RUN_FROM_PACKAGE" = "0"
-      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off") # <--- lookup()
-    },
-    each.value.app_settings
-  )
- 
-  identity {
-    type = "SystemAssigned"
+  security_rule {
+    name                       = "AllowSSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range           = "*"
+    destination_port_range      = "22"
+    source_address_prefix       = "*"
+    destination_address_prefix  = "*"
+  }
+}
+resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
+  network_interface_id      = azurerm_network_interface.ama.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                = "myvm01"
+  resource_group_name = azurerm_resource_group.rg_new.name
+  location            = azurerm_resource_group.rg_new.location
+  size                = "Standard_B2s"
+  admin_username      = var.admin_username
+  network_interface_ids = [azurerm_network_interface.nic.id]
+  admin_password = var.admin_password
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
   }
 }

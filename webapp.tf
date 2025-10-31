@@ -108,13 +108,13 @@ resource "azurerm_resource_group" "rg" {
   #}
 
   # ✅ app_settings block works under AzureRM v4
-  app_settings = merge(
-    {
-      "WEBSITE_RUN_FROM_PACKAGE" = "0"
-      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
-    },
-    each.value.app_settings
-  )
+ # app_settings = merge(
+   # {
+    #  "WEBSITE_RUN_FROM_PACKAGE" = "0"
+     # "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
+    #},
+    #each.value.app_settings
+  #)
 
   identity {
     type = "SystemAssigned"

@@ -46,7 +46,7 @@ locals {
 # App Service Plan per location (Linux)
 resource "azurerm_service_plan" "asp" {
  for_each = local.locations
- name = "asp-${replace(each.value, " ", "-")}"
+ name                = "asp-${each.value}"
  resource_group_name = azurerm_resource_group.rg.name
  location            = each.value
  os_type  = "Linux"
@@ -90,14 +90,9 @@ resource "azurerm_linux_web_app" "app" {
  https_only = true
  tags       = merge(var.tags, { env = each.value.env })
  site_config {
-  ftps_state = "Disabled"
-
-  application_stack {
-    python_version = "3.11"        # if runtime = "PYTHON|3.11"
-    node_version   = "18-lts"      # if runtime = "NODE|18-lts"
-  }
-}
-
+   linux_fx_version = each.value.runtime  # e.g., "PYTHON|3.11"
+   ftps_state       = "Disabled"
+ }
  # Demonstrating lookup() for an optional app setting with a default:
  # If FEATURE_FLAG not provided per app, default to "off".
  app_settings = merge(

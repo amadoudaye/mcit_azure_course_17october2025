@@ -56,23 +56,13 @@ resource "azurerm_service_plan" "asp" {
 }
 resource "azurerm_linux_web_app" "app" {
   for_each = var.webapps
+
   name                = each.value.name
   resource_group_name = azurerm_resource_group.rg.name
   location            = each.value.location
   service_plan_id     = azurerm_service_plan.asp_env["${each.value.location}-${each.value.env}"].id
   https_only          = true
   tags                = merge(var.tags, { env = each.value.env })
-app_settings = merge(
-    {
-      "WEBSITE_RUN_FROM_PACKAGE" = "0"
-      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
-    },
-    each.value.app_settings
-  )
-
-  identity {
-    type = "SystemAssigned"
-  }
 
   site_config {
     ftps_state = "Disabled"
@@ -86,9 +76,18 @@ app_settings = merge(
     }
   }
 
-  
-}
+  app_settings = merge(
+    {
+      "WEBSITE_RUN_FROM_PACKAGE" = "0"
+      "FEATURE_FLAG"             = lookup(each.value.app_settings, "FEATURE_FLAG", "off")
+    },
+    each.value.app_settings
+  )
 
+  identity {
+    type = "SystemAssigned"
+  }
+}
  # Demonstrating lookup() for an optional app setting with a default:
  # If FEATURE_FLAG not provided per app, default to "off".
  app_settings = merge(

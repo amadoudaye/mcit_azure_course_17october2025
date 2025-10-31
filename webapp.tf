@@ -121,9 +121,9 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
-output "webapp_hostnames" {
-  value = {
+#output "webapp_hostnames" {
+ # value = {
  #   for k, v in azurerm_linux_web_app.app : k => v.default_host_name
-  }
-}
+  #}
+#}
 

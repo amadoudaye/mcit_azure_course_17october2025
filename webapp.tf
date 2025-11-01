@@ -35,23 +35,29 @@ variable "tags" {
   default     = {}
 }
 
- Resource Group
+# ---------------------------
+# Resource Group
+# ---------------------------
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.resource_group_location
   tags     = var.tags
 }
 
- Distinct locations
+# ---------------------------
+# Distinct locations
+# ---------------------------
 locals {
   locations = toset([for w in var.webapps : w.location])
 }
 
- Service plan per location
+# ---------------------------
+# Service plan per location
+# ---------------------------
 resource "azurerm_service_plan" "asp" {
   for_each = local.locations
 
-  name                = "asp-${replace(each.value, " ", "-")}" # ✅ fix spaces
+  name                = "asp-${replace(each.value, " ", "-")}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = each.value
   os_type             = "Linux"
@@ -59,7 +65,9 @@ resource "azurerm_service_plan" "asp" {
   tags                = var.tags
 }
 
- Plans keyed by location-env
+# ---------------------------
+# Plans keyed by location-env
+# ---------------------------
 locals {
   plans = {
     for k, v in var.webapps :
@@ -71,11 +79,13 @@ locals {
   }
 }
 
- Service plan per environment
+# ---------------------------
+# Service plan per environment
+# ---------------------------
 resource "azurerm_service_plan" "asp_env" {
   for_each = local.plans
 
-  name                = "asp-${replace(each.key, " ", "-")}" # ✅ fix spaces
+  name                = "asp-${replace(each.key, " ", "-")}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = each.value.location
   os_type             = "Linux"
@@ -83,7 +93,9 @@ resource "azurerm_service_plan" "asp_env" {
   tags                = var.tags
 }
 
- Web apps
+# ---------------------------
+# Web apps
+# ---------------------------
 resource "azurerm_linux_web_app" "app" {
   for_each = var.webapps
 
@@ -94,7 +106,6 @@ resource "azurerm_linux_web_app" "app" {
   https_only          = true
   tags                = merge(var.tags, { env = each.value.env })
 
-   #✅ Fixed: remove linux_fx_version and use application_stack
   site_config {
     ftps_state = "Disabled"
 
@@ -107,7 +118,6 @@ resource "azurerm_linux_web_app" "app" {
     }
   }
 
-  # ✅ app_settings block works under AzureRM v4
   app_settings = merge(
     {
       "WEBSITE_RUN_FROM_PACKAGE" = "0"
@@ -121,10 +131,11 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
+# ---------------------------
+# Outputs
+# ---------------------------
 output "webapp_hostnames" {
   value = {
     for k, v in azurerm_linux_web_app.app : k => v.default_hostname
   }
 }
-
-
